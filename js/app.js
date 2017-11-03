@@ -1,19 +1,36 @@
 /*
  * Create a list that holds all of your cards
  */
+/*jshint esversion: 6 */
+start_game();
+let moves = 0;
+let opened = [];
+let timer=0;
+var gameStarted;
+const stars = document.getElementsByClassName('fa-star');
 
+//Initializes the game
+function start_game() {
+    const symbols = ['bicycle', 'bicycle', 'leaf', 'leaf', 'cube', 'cube', 'anchor', 'anchor', 'paper-plane-o', 'paper-plane-o', 'bolt', 'bolt', 'bomb', 'bomb', 'diamond', 'diamond'];
+    const cards = shuffle(symbols);
+    const deck = document.getElementsByClassName('deck')[0];
+    for (var index = 0; index < 16; index++) {
+        deck.innerHTML += '<li class="card"><i class="fa fa-' + cards[index] + '"></i></li>';
+    }
+}
 
-/*
- * Display the cards on the page
- *   - shuffle the list of cards using the provided "shuffle" method below
- *   - loop through each card and create its HTML
- *   - add each card's HTML to the page
- */
+//Function for Timer
+function gameTimer() {
+    setInterval(function() {
+        timer++;
+        $('.time').text(timer);
+    }, 750);
+}
 
 // Shuffle function from http://stackoverflow.com/a/2450976
 function shuffle(array) {
-    var currentIndex = array.length, temporaryValue, randomIndex;
-
+    let currentIndex = array.length,
+        temporaryValue, randomIndex;
     while (currentIndex !== 0) {
         randomIndex = Math.floor(Math.random() * currentIndex);
         currentIndex -= 1;
@@ -21,18 +38,68 @@ function shuffle(array) {
         array[currentIndex] = array[randomIndex];
         array[randomIndex] = temporaryValue;
     }
-
     return array;
 }
 
+//jQuery function for card click
+$('.card').click(function() {
+    if (!gameStarted) {
+        // start timer!
+        gameTimer();
+        gameStarted = true;
+    }
+    if (!($(this).hasClass('open') || $(this).hasClass('match'))) {
+        moves++;
+        $('.moves').text(moves);
+        check_stars();
+        $(this).addClass('open');
+        opened.push($(this));
+        if (opened.length % 2 === 0) {
+            setTimeout(card_match, 1000);
+        }
+    }
+});
 
-/*
- * set up the event listener for a card. If a card is clicked:
- *  - display the card's symbol (put this functionality in another function that you call from this one)
- *  - add the card to a *list* of "open" cards (put this functionality in another function that you call from this one)
- *  - if the list already has another card, check to see if the two cards match
- *    + if the cards do match, lock the cards in the open position (put this functionality in another function that you call from this one)
- *    + if the cards do not match, remove the cards from the list and hide the card's symbol (put this functionality in another function that you call from this one)
- *    + increment the move counter and display it on the page (put this functionality in another function that you call from this one)
- *    + if all cards have matched, display a message with the final score (put this functionality in another function that you call from this one)
- */
+//Function for matches cards.
+function card_match() {
+    if (opened[opened.length - 2].html() == opened[opened.length - 1].html()) {
+        opened[opened.length - 2].removeClass('open');
+        opened[opened.length - 2].addClass('match');
+        opened[opened.length - 1].removeClass('open');
+        opened[opened.length - 1].addClass('match');
+    } else {
+        opened[opened.length - 1].removeClass('open');
+        opened[opened.length - 2].removeClass('open');
+        opened.pop();
+        opened.pop();
+    }
+    if (opened.length == 16) {
+        clearTimeout(timer);
+        const stars = document.getElementsByClassName('fa-star').length;
+        swal({
+
+            allowEscapeKey: false,
+            allowOutsideClick: false,
+            title: 'Congratulations! You Won!',
+            text: 'With ' + moves + ' Moves and ' + stars + ' Stars and took ' + timer + 'secs to finish.',
+            type: 'success',
+            confirmButtonColor: '#02ccba',
+            confirmButtonText: 'Play again!'
+        }).then(function(isConfirm) {
+            if (isConfirm) {
+                window.location.reload();
+            }
+        });
+    }
+}
+
+//Function for star ratings.
+function check_stars() {
+    if (moves == 23) {
+        stars[2].classList.add('fa-star-o');
+        stars[2].classList.remove('fa-star');
+    } else if (moves == 31) {
+        stars[1].classList.add('fa-star-o');
+        stars[1].classList.remove('fa-star');
+    }
+}
